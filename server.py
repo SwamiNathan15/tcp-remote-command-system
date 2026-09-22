@@ -21,6 +21,7 @@ client, address = server.accept()
 print("Client connected:", address)
 
 while True:
+
     command = client.recv(1024).decode().strip()
 
     if not command:
@@ -32,10 +33,16 @@ while True:
         client.send("Connection closed.".encode())
         break
 
-    if command in ALLOWED_COMMANDS:
+    command_parts = command.split()
+
+    command_name = command_parts[0]
+
+    arguments = command_parts[1:]
+
+    if command_name in ALLOWED_COMMANDS:
 
         result = subprocess.run(
-            [command],
+            [command_name] + arguments,
             capture_output=True,
             text=True
         )
@@ -46,6 +53,7 @@ while True:
             output = result.stderr
 
     else:
+
         output = "ERROR: Command not allowed."
 
     client.send(output.encode())
