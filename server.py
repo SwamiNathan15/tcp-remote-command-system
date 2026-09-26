@@ -2,11 +2,32 @@ import socket
 import subprocess
 
 ALLOWED_COMMANDS = {
-    "hostname",
-    "whoami",
-    "date",
     "pwd",
-    "ls"
+    "ls",
+    "cd",
+    "mkdir",
+    "touch",
+    "cp",
+    "mv",
+    "rm",
+    "cat",
+    "less",
+    "head",
+    "tail",
+    "find",
+    "grep",
+    "which",
+    "ps",
+    "kill",
+    "df",
+    "free",
+    "ip",
+    "ping",
+    "ss",
+    "curl",
+    "git",
+    "whoami",
+    "date"
 }
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -51,9 +72,10 @@ while True:
 
         if result.stderr:
             output = result.stderr
-
+        
+        if not output:
+            output = "Command executed successfully."
     else:
-
         output = "ERROR: Command not allowed."
 
     client.send(output.encode())
