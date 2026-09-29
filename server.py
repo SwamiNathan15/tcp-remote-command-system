@@ -4,6 +4,7 @@ import os
 import shlex
 
 current_directory = os.getcwd()
+server_pid = os.getpid()
 
 ALLOWED_COMMANDS = {
     "pwd",
@@ -79,6 +80,33 @@ while True:
                 output = "Directory changed successfully."
             else:
                 output = "ERROR: Directory does not exist."
+                
+    elif command_name == "kill":
+
+        if len(arguments) != 1:
+            output = "ERROR: kill requires exactly one PID."
+
+        else:
+            try:
+                pid = int(arguments[0])
+
+                if pid == server_pid:
+                    output = "ERROR: Cannot kill the command server itself."
+
+                else:
+                    result = subprocess.run(
+                        ["kill", str(pid)],
+                        capture_output=True,
+                        text=True
+                    )
+
+                    if result.stderr:
+                        output = result.stderr
+                    else:
+                        output = "Process terminated successfully."
+
+            except ValueError:
+                output = "ERROR: PID must be a number."
 
     elif command_name in ALLOWED_COMMANDS:
 
