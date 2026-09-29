@@ -2,9 +2,48 @@ import socket
 import subprocess
 import os 
 import shlex
+import logging
 
 current_directory = os.getcwd()
 server_pid = os.getpid()
+
+logging.basicConfig(
+    filename="server.log",
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
+
+def receive_message(sock):
+    data = b""
+
+    while len(data) < 4:
+        chunk = sock.recv(4 - len(data))
+        if not chunk:
+            return None
+        data += chunk
+
+    message_length = int.from_bytes(data, byteorder="big")
+
+    data = b""
+
+    while len(data) < message_length:
+        chunk = sock.recv(message_length - len(data))
+        if not chunk:
+            return None
+        data += chunk
+
+    return data.decode()
+
+
+def send_message(sock, message):
+    data = message.encode()
+
+    message_length = len(data)
+
+    sock.sendall(
+        message_length.to_bytes(4, byteorder="big") + data
+    )
+
 
 ALLOWED_COMMANDS = {
     "pwd",
@@ -45,18 +84,25 @@ print("Server is waiting for a connection...")
 client, address = server.accept()
 
 print("Client connected:", address)
+logging.info("Client connected: %s", address)
 
 while True:
 
-    command = client.recv(1024).decode().strip()
+    command = receive_message(client)
+    
+    if command is None:
+        break
+    
+    command = command.strip()
 
     if not command:
         break
 
     print("Command received:", command)
+    logging.info("Command received: %s", command)
 
     if command == "exit":
-        client.send("Connection closed.".encode())
+        send_message(client, "Connection closed.")
         break
 
     command_parts = shlex.split(command)
@@ -129,7 +175,9 @@ while True:
 
         output = "ERROR: Command not allowed."
 
-    client.send(output.encode())
+    send_message(client, output)
+    
+logging.info("Client disconnected")
 
 client.close()
 server.close()
